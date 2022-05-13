@@ -1,0 +1,26 @@
+{
+  "name": "nftmarketplaceapp",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "compile": "solcjs --abi --include-path node_modules/ --base-path . blockchain/contract/nftmarketplace.sol --output-dir blockchain/build"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.6.0",
+    "bulma": "^0.9.4",
+    "ethers": "^5.6.5",
+    "next": "12.1.6",
+    "react": "18.1.0",
+    "react-dom": "18.1.0",
+    "solc": "^0.8.13",
+    "web3": "^1.0.0-beta.55"
+  },
+  "devDependencies": {
+    "eslint": "8.15.0",
+    "eslint-config-next": "12.1.6"
+  }
+}
