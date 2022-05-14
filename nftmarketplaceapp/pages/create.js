@@ -8,6 +8,7 @@ export default function create() {
   const { connect, web3Api, address, sweb3,contract } = useWeb3();
 
   const[uri,setUri]=useState("")
+  const[nftCount,setnftCount]=useState(0)
   const [nftitem,setnftitem]=useState([])
 
   //const data = window.localStorage.getItem('address')
@@ -19,21 +20,29 @@ export default function create() {
     {
         async function loadnft()
         {
+
+          const objects = {}
+         // await contract.methods.myListingNftCount().call().then(console.log)
+          await contract.methods.myListingNftCount().call()
+          .then(function(result){
+              console.log(result.toString(10))
+          })
+          //setnftCount(count)
             //const data = await contract.methods.fetchMyNFTs().call()
-            const data = await contract.methods.fetchMyNFTs().call({from: address})
-            const items = await Promise.all(data.map(async i => {
+            // const data = await contract.methods.fetchMyNFTs().call({from: address})
+            // const items = await Promise.all(data.map(async i => {
                 
-                let price = ethers.utils.formatUnits(i.price.toString(), 'ether')
-                let item = {
-                  tokenid: i.tokenid.toNumber(),
-                  seller: i.seller,
-                  owner: i.owner,
-                  price:price,
-                  status: i.status
-                }
-                return item;
-             }));
-             setnftitem(items)
+            //     let price = ethers.utils.formatUnits(i.price.toString(), 'ether')
+            //     let item = {
+            //       tokenid: i.tokenid.toNumber(),
+            //       seller: i.seller,
+            //       owner: i.owner,
+            //       price:price,
+            //       status: i.status
+            //     }
+            //     return item;
+            //  }));
+            //  setnftitem(items)
         }
         loadnft()
         
@@ -56,12 +65,56 @@ export default function create() {
       }
     
   }
+  const getCount=async()=>{
+    debugger
+    if(contract)
+    {
+      await contract.methods.myListingNftCount().call({
+        from:address
+    }).then(function(result){
+              console.log(result.toString(10))
+              setnftCount(result.toString(10))
+          })
+
+          await contract.methods.nftOwner(1).call()
+          .then(function(result){
+              console.log(result.toString(10))
+              //setnftCount(result.toString(10))
+          })
+          await contract.methods.nftlistingPrice().call()
+          .then(function(result){
+              console.log(result.toString(10))
+              //setnftCount(result.toString(10))
+          })
+          await contract.methods.gettokenprice(1).call()
+          .then(function(result){
+              console.log(result.toString(10))
+              //setnftCount(result.toString(10))
+          })
+
+          await contract.methods.mytoken().call({from:address})
+          .then(function(result){
+              console.log(result.toString(10))
+              //setnftCount(result.toString(10))
+          })
+          await contract.methods.fetchMyNFTs().call({from:address})
+          .then(function(result){
+              console.log(result.toString(10))
+              //setnftCount(result.toString(10))
+          })
+      
+
+    }
+  
+}
 
   return (
     <>
     <div className="container is-widescreen">
     <div className="field">
-        <label className="label">Name</label>
+        <label className="label">Name {nftCount}</label>
+        <label className="label">Name {nftCount}</label>
+        <label className="label">Name {nftCount}</label>
         <div className="control">
           <input   onChange={nftChange} className="input" type="text" placeholder="Text input" />
         </div>
@@ -70,6 +123,7 @@ export default function create() {
       <div className="field is-grouped">
         <div className="control">
           <button onClick={buyNFT} type="type" className="button is-link">Buy NFT</button>
+          <button onClick={getCount} type="type" className="button is-link">Count</button>
         </div>
       </div>
     </div>

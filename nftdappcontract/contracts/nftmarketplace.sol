@@ -20,18 +20,23 @@ struct nftitem{
     bool status;
 }
 
-mapping(uint => nftitem) private nftitemlist;
+
+mapping(uint => nftitem) private nftitemlist; // listing mapping
+mapping(address => uint[]) public listingGroup; //0x00=[1,2,4]   // avoid for loop in all data if supposed to get one individual data
+//mapping(address => uint[]) public notListingGroup; //0x00=[1,2,4] // avoid for loop in all data if supposed to get one individual data
 constructor() ERC721("My NFT","NFT"){
     owner=payable(msg.sender) ;
 }
 
-//mint nft anyone
+//mint nft anyone free of cost
 function createnfttoken(string memory _tokenURI)  public returns (uint){
-_tokenIds.increment();
-uint newtokenid=_tokenIds.current();
-_mint(msg.sender,newtokenid);
-_setTokenURI(newtokenid,_tokenURI);
-return newtokenid;
+    _tokenIds.increment();
+    uint newtokenid=_tokenIds.current();
+    //my not listing nft
+    //notListingGroup[msg.sender].push(newtokenid); //0x00=[1,2,4] avoid for loop all values
+    _mint(msg.sender,newtokenid);
+    _setTokenURI(newtokenid,_tokenURI);
+    return newtokenid;
 }
 
 // nft owner listing in the marketplace paying with listing fees
@@ -42,23 +47,12 @@ function nftlisting(uint _tokenid,uint _nftsaleprice) payable public{
     require(ERC721.ownerOf(_tokenid) == msg.sender, "You are not owner of this nft");
     require(msg.value==listingPrice,"Pay correct listing price");
     //require (nftitemlist[_tokenid].status != true,"already this nft in sale, you can not list again.please update price function");
-
-    // if(nftitemlist[_tokenid].tokenid ==_tokenid)
-    // {
-    //     nftitemlist[_tokenid].status=true;
-    //     _transfer(msg.sender,address(this),_tokenid);
-    //     payable(owner).transfer(listingPrice);
-    // }
-    // else 
-    // {
-        nftitemlist[_tokenid]=nftitem(_tokenid,msg.sender,address(this),_nftsaleprice,true);
-        _transfer(msg.sender,address(this),_tokenid);
-        payable(owner).transfer(listingPrice);
-    //}
-
-    
-
+    listingGroup[msg.sender].push(_tokenid); //0x00=[1,2,4] avoid for loop all values
+    nftitemlist[_tokenid]=nftitem(_tokenid,msg.sender,address(this),_nftsaleprice,true);
+    _transfer(msg.sender,address(this),_tokenid);
+    payable(owner).transfer(listingPrice);
 }
+
 // get listing fees for seller
 function nftlistingPrice() public view returns (uint256) {
       return listingPrice;
@@ -73,17 +67,50 @@ function gettokenprice(uint _tokenid) public view returns (uint){
 function purchasenft(uint _tokenid) public payable{
     uint nftprice=nftitemlist[_tokenid].price;
     bool issale=nftitemlist[_tokenid].status;
+
     require(issale==true,"This nft not for sale right now");
     require(msg.value==nftprice,"nft price not same");
+    
     address seller = nftitemlist[_tokenid].seller;
     require(seller !=msg.sender,"seller can not buy their own nft");
     nftitemlist[_tokenid].owner=msg.sender;
     nftitemlist[_tokenid].seller=address(0);
     nftitemlist[_tokenid].status=false;
+
+    // array update
+    listingGroupupdate(_tokenid,seller,msg.sender);
     _transfer(address(this),msg.sender,_tokenid);
     payable(seller).transfer(nftprice);
 }
+// this is function for avoid for loop all nft only aray data only loop for individual person nft
+function listingGroupupdate(uint _tokenid,address preseller,address buyer) private{
+    uint length = listingGroup[preseller].length;
+        //uint[] memory newarray=new uint[](length);
+        for(uint i=0;i < length;i++)
+        {
+            //address  tempaddress=buyer[i];
+            if(listingGroup[preseller][i]==_tokenid) 
+            {
+                listingGroup[preseller][i]=0;
+                listingGroup[buyer].push(_tokenid);
+            }
+        }
+}
+// only for our knowledge 
+function mytoken() public view returns(uint[] memory)
+{
+        uint length = listingGroup[msg.sender].length;
+        uint[] memory newarray=new uint[](length);
+        for(uint i=0;i < length;i++)
+        {
+            //address  tempaddress=buyer[i];
+            newarray[i]=listingGroup[msg.sender][i];
+        }
+        return newarray;  
 
+}
+
+// can update price even though listing
 function priceUpdate(uint _tokenid,uint price) public{
     require(msg.sender==nftitemlist[_tokenid].seller,"You are not seller of this nft");
     nftitemlist[_tokenid].price=price;
@@ -98,19 +125,39 @@ function relisting(uint _tokenid,uint price) public payable{
      nftitemlist[_tokenid].price=price;
      nftitemlist[_tokenid].owner=address(this);
      nftitemlist[_tokenid].seller=msg.sender;
+     listingGroup[msg.sender].push(_tokenid);
     _transfer(msg.sender,address(this),_tokenid);
      payable(owner).transfer(listingPrice);
 
 }
 
-function tokenOwner(uint _tokenid) public view returns(address){
+function nftOwner(uint _tokenid) public view returns(address){
     return nftitemlist[_tokenid].owner;
 }
-function tokenSeller(uint _tokenid) public view returns(address){
+
+function nftSeller(uint _tokenid) public view returns(address){
     return nftitemlist[_tokenid].seller;
 }
 
-///  fetch list of NFTS owned/bought by this user
+//get my listing nft count
+function myListingNftCount() public view returns(uint){
+    return listingGroup[msg.sender].length;
+}
+
+//get  my listing nft one by one from web3 ui
+function myListingNft(uint _id) public view returns(uint,address,address,uint){
+    //require(ERC721.ownerOf(_tokenid) == msg.sender, "You are not owner of this nft");
+    uint _tokenid=listingGroup[msg.sender][_id];
+    require (_tokenid > 0,"");
+    return (nftitemlist[_tokenid].tokenid,
+    nftitemlist[_tokenid].seller,
+    nftitemlist[_tokenid].owner,
+    nftitemlist[_tokenid].price);
+}
+
+
+
+/// @notice fetch list of NFTS owned/bought by this user
         function fetchMyNFTs() public view returns (nftitem[] memory){
             //get total number of items ever created
             uint totalItemCount = _tokenIds.current();
@@ -140,7 +187,7 @@ function tokenSeller(uint _tokenid) public view returns(address){
         }
 
 
-         ///  fetch list of NFTS owned/bought by this user
+         /// @notice fetch list of NFTS owned/bought by this user
         function fetchItemsCreated() public view returns (nftitem[] memory){
             //get total number of items ever created
             uint totalItemCount = _tokenIds.current();
