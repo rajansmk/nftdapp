@@ -149,10 +149,7 @@ function myListingNft(uint _id) public view returns(uint,address,address,uint){
     //require(ERC721.ownerOf(_tokenid) == msg.sender, "You are not owner of this nft");
     uint _tokenid=listingGroup[msg.sender][_id];
     require (_tokenid > 0,"");
-    return (nftitemlist[_tokenid].tokenid,
-    nftitemlist[_tokenid].seller,
-    nftitemlist[_tokenid].owner,
-    nftitemlist[_tokenid].price);
+    return (nftitemlist[_tokenid].tokenid,nftitemlist[_tokenid].seller,nftitemlist[_tokenid].owner,nftitemlist[_tokenid].price);
 }
 
 

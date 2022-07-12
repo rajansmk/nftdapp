@@ -94,12 +94,25 @@ export default function create() {
 
           await contract.methods.mytoken().call({from:address})
           .then(function(result){
-              console.log(result.toString(10))
+              console.log(result)
               //setnftCount(result.toString(10))
           })
+          //test
           await contract.methods.fetchMyNFTs().call({from:address})
           .then(function(result){
               console.log(result.toString(10))
+              //setnftCount(result.toString(10))
+          })
+          await contract.methods.fetchItemsCreated().call({from:address})
+          .then(function(result){
+              console.log(result.toString(10))
+              //setnftCount(result.toString(10))
+          })
+
+          //test
+          await contract.methods.myListingNft(1).call({from:address})
+          .then(function(result){
+              console.log(result.tokenid)
               //setnftCount(result.toString(10))
           })
       
